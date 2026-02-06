@@ -1,366 +1,0 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مزايدة وذكاء - لعبة لاعبين</title>
-    <meta name="description"
-        content="مزايدة وذكاء - لعبة معلومات استراتيجية حيث تزايد بالوقت للإجابة على الأسئلة. تحدَّ معلوماتك واستراتيجيتك!">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap"
-        rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <script src="questions.js"></script>
-    <link rel="stylesheet" href="styles.css">
-</head>
-
-<body>
-    <div id="app">
-        <!-- شاشة الردهة أونلاين -->
-        <div id="lobby-screen" class="screen active">
-            <div class="lobby-container">
-                <header class="lobby-header">
-                    <div class="logo-large">
-                        <span class="logo-icon">🧠</span>
-                        <h1>مزايدة وذكاء</h1>
-                        <span class="beta-badge">أونلاين</span>
-                    </div>
-                </header>
-
-                <main class="lobby-main">
-                    <!-- قسم اللاعب -->
-                    <div class="player-setup-card">
-                        <h3>بياناتك</h3>
-                        <div class="avatar-selector">
-                            <img id="my-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=p1" alt="صورتك"
-                                class="avatar-preview">
-                            <button class="btn-icon" onclick="changeMyAvatar()">
-                                <span class="material-icons">refresh</span>
-                            </button>
-                        </div>
-                        <input type="text" id="my-name" class="name-input" placeholder="اكتب اسمك هنا..."
-                            maxlength="15">
-                        <p class="status-text" id="connection-status">جاري الاتصال بالسيرفر...</p>
-                    </div>
-
-                    <div class="game-modes-grid">
-                        <!-- وضع الاستضافة -->
-                        <div class="mode-card host-mode">
-                            <div class="mode-icon">
-                                <span class="material-icons">add_box</span>
-                            </div>
-                            <h2>إنشاء لعبة</h2>
-                            <p>أنشئ غرفة وأرسل الرمز لصديقك</p>
-
-                            <div class="settings-mini">
-                                <select id="rounds-select">
-                                    <option value="5">٥ جولات</option>
-                                    <option value="10" selected>١٠ جولات</option>
-                                    <option value="15">١٥ جولة</option>
-                                </select>
-                            </div>
-
-                            <button class="btn-primary" id="btn-host" onclick="hostGame()" disabled>
-                                إنشاء غرفة
-                            </button>
-
-                            <div id="host-info" class="host-info hidden">
-                                <p>شارك هذا الرمز مع صديقك:</p>
-                                <div class="room-code-display">
-                                    <span id="room-code">...</span>
-                                    <button class="btn-copy" onclick="copyRoomCode()">
-                                        <span class="material-icons">content_copy</span>
-                                    </button>
-                                </div>
-                                <p class="waiting-text">
-                                    <span class="material-icons spin">sync</span>
-                                    بانتظار انضمام صديقك...
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- فاصل -->
-                        <div class="divider">
-                            <span>أو</span>
-                        </div>
-
-                        <!-- وضع الانضمام -->
-                        <div class="mode-card join-mode">
-                            <div class="mode-icon">
-                                <span class="material-icons">login</span>
-                            </div>
-                            <h2>انضمام للعبة</h2>
-                            <p>أدخل رمز الغرفة من صديقك</p>
-
-                            <div class="join-input-group">
-                                <input type="text" id="join-code-input" placeholder="أدخل رمز الغرفة هنا">
-                            </div>
-
-                            <button class="btn-secondary" id="btn-join" onclick="joinGame()" disabled>
-                                انضمام
-                            </button>
-                        </div>
-                    </div>
-                </main>
-            </div>
-        </div>
-
-        <!-- شاشة المزايدة -->
-        <div id="bidding-screen" class="screen">
-            <header class="game-header">
-                <div class="logo">
-                    <span class="logo-icon">🧠</span>
-                    <h1>مزايدة وذكاء</h1>
-                </div>
-                <div class="round-info">
-                    <span class="round-number" id="round-display">الجولة ١/١٠</span>
-                </div>
-                <div class="scores-header">
-                    <div class="score-badge player1-score">
-                        <span id="header-player1-name">اللاعب ١</span>
-                        <span id="header-player1-score">٠</span>
-                    </div>
-                    <div class="score-badge player2-score">
-                        <span id="header-player2-name">اللاعب ٢</span>
-                        <span id="header-player2-score">٠</span>
-                    </div>
-                </div>
-            </header>
-
-            <main class="bidding-main">
-                <div class="category-banner">
-                    <h2 id="category-title">علوم الفضاء</h2>
-                    <p class="bidding-rule">من يزايد بأقل وقت يجيب أولاً!</p>
-                </div>
-
-                <div class="two-player-bidding">
-                    <!-- اللاعب الأول -->
-                    <div class="player-bid-card" id="player1-bid-card">
-                        <img id="bidding-avatar1" src="https://api.dicebear.com/7.x/avataaars/svg?seed=player1"
-                            alt="اللاعب ١" class="bidding-avatar">
-                        <span class="bidding-player-name" id="bidding-player1-name">اللاعب ١</span>
-                        <div class="bid-input-container">
-                            <span class="bid-label">مزايدتك</span>
-                            <input type="range" id="bid-slider-1" min="3" max="30" value="15" class="bid-slider"
-                                oninput="updateBid(1)">
-                            <span class="bid-display" id="bid-display-1">١٥ث</span>
-                        </div>
-                        <button class="btn-lock-bid" id="lock-btn-1" onclick="lockBid(1)">
-                            <span class="material-icons">lock</span>
-                            تأكيد
-                        </button>
-                    </div>
-
-                    <div class="vs-circle">
-                        <span>VS</span>
-                    </div>
-
-                    <!-- اللاعب الثاني -->
-                    <div class="player-bid-card" id="player2-bid-card">
-                        <img id="bidding-avatar2" src="https://api.dicebear.com/7.x/avataaars/svg?seed=player2"
-                            alt="اللاعب ٢" class="bidding-avatar">
-                        <span class="bidding-player-name" id="bidding-player2-name">اللاعب ٢</span>
-                        <div class="bid-input-container">
-                            <span class="bid-label">مزايدتك</span>
-                            <input type="range" id="bid-slider-2" min="3" max="30" value="15" class="bid-slider"
-                                oninput="updateBid(2)">
-                            <span class="bid-display" id="bid-display-2">١٥ث</span>
-                        </div>
-                        <button class="btn-lock-bid" id="lock-btn-2" onclick="lockBid(2)">
-                            <span class="material-icons">lock</span>
-                            تأكيد
-                        </button>
-                    </div>
-                </div>
-
-                <div class="bidding-timer">
-                    <span class="timer-label">وقت المزايدة:</span>
-                    <span class="timer-value" id="bidding-timer">٢٠</span>
-                </div>
-
-                <p class="bidding-hint">💡 نصيحة: أخفِ شاشتك عن صديقك أثناء المزايدة!</p>
-            </main>
-        </div>
-
-        <!-- شاشة الإجابة -->
-        <div id="execution-screen" class="screen">
-            <header class="game-header compact">
-                <div class="logo small">
-                    <span class="logo-icon">🧠</span>
-                    <h1>مزايدة وذكاء</h1>
-                </div>
-                <div class="scores-header">
-                    <div class="score-badge player1-score">
-                        <span id="exec-player1-name">اللاعب ١</span>
-                        <span id="exec-player1-score">٠</span>
-                    </div>
-                    <div class="score-badge player2-score">
-                        <span id="exec-player2-name">اللاعب ٢</span>
-                        <span id="exec-player2-score">٠</span>
-                    </div>
-                </div>
-            </header>
-
-            <main class="execution-main">
-                <div class="stage-header">
-                    <h2 id="answering-player-title">دور اللاعب ١</h2>
-                </div>
-
-                <div class="player-status-bar">
-                    <div class="player-info-execution">
-                        <img id="answering-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=player1"
-                            alt="اللاعب" class="execution-avatar">
-                        <div class="execution-info">
-                            <span class="execution-name" id="answering-name">اللاعب ١</span>
-                            <span class="execution-bid" id="answering-bid">المزايدة: ١٥ث</span>
-                        </div>
-                    </div>
-                    <div class="time-remaining">
-                        <span class="time-label">الوقت المتبقي</span>
-                        <div class="timer-display">
-                            <span class="timer-number" id="answer-timer">١٥.٠</span>
-                            <span class="timer-unit">ثانية</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="question-container">
-                    <div class="question-card">
-                        <p class="question-text" id="question-text">أي كوكب في نظامنا الشمسي يُعرف بالكوكب الأحمر؟</p>
-                    </div>
-
-                    <div class="answers-grid" id="answers-container">
-                        <button class="answer-btn" onclick="selectAnswer(this, 0)">
-                            <span class="answer-letter">أ</span>
-                            <span class="answer-text">الزهرة</span>
-                        </button>
-                        <button class="answer-btn" onclick="selectAnswer(this, 1)">
-                            <span class="answer-letter">ب</span>
-                            <span class="answer-text">المريخ</span>
-                        </button>
-                        <button class="answer-btn" onclick="selectAnswer(this, 2)">
-                            <span class="answer-letter">ج</span>
-                            <span class="answer-text">المشتري</span>
-                        </button>
-                        <button class="answer-btn" onclick="selectAnswer(this, 3)">
-                            <span class="answer-letter">د</span>
-                            <span class="answer-text">زحل</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="answer-timer-bar">
-                    <div class="timer-progress" id="timer-progress"></div>
-                </div>
-            </main>
-        </div>
-
-        <!-- شاشة نتيجة الجولة -->
-        <div id="round-result-screen" class="screen">
-            <header class="game-header">
-                <div class="logo">
-                    <span class="logo-icon">🧠</span>
-                    <h1>مزايدة وذكاء</h1>
-                </div>
-            </header>
-
-            <main class="round-result-main">
-                <div class="round-result-banner" id="round-result-banner">
-                    <h2 id="round-result-title">🎉 إجابة صحيحة!</h2>
-                    <p id="round-result-desc">حصل اللاعب على ١٠٠ نقطة</p>
-                </div>
-
-                <div class="round-stats">
-                    <div class="player-round-stat">
-                        <img id="result-avatar1" src="https://api.dicebear.com/7.x/avataaars/svg?seed=player1"
-                            alt="اللاعب ١" class="result-player-avatar">
-                        <span class="result-player-name" id="result-player1-name">اللاعب ١</span>
-                        <span class="result-player-score" id="result-player1-score">٠</span>
-                        <span class="result-points-gained" id="result-player1-gained"></span>
-                    </div>
-                    <div class="player-round-stat">
-                        <img id="result-avatar2" src="https://api.dicebear.com/7.x/avataaars/svg?seed=player2"
-                            alt="اللاعب ٢" class="result-player-avatar">
-                        <span class="result-player-name" id="result-player2-name">اللاعب ٢</span>
-                        <span class="result-player-score" id="result-player2-score">٠</span>
-                        <span class="result-points-gained" id="result-player2-gained"></span>
-                    </div>
-                </div>
-
-                <div class="correct-answer-display" id="correct-answer-display">
-                    <span class="correct-label">الإجابة الصحيحة:</span>
-                    <span class="correct-answer" id="correct-answer-text">المريخ</span>
-                </div>
-
-                <button class="btn-primary btn-next-round" onclick="nextRound()">
-                    <span class="material-icons">arrow_back</span>
-                    الجولة التالية
-                </button>
-            </main>
-        </div>
-
-        <!-- شاشة النتائج النهائية -->
-        <div id="final-results-screen" class="screen">
-            <header class="game-header">
-                <div class="logo">
-                    <span class="logo-icon">🧠</span>
-                    <h1>مزايدة وذكاء</h1>
-                </div>
-            </header>
-
-            <main class="final-results-main">
-                <div class="winner-announcement" id="winner-announcement">
-                    <div class="trophy">🏆</div>
-                    <h2 id="winner-name">الفائز!</h2>
-                    <p id="winner-score">بمجموع ١٠٠٠ نقطة</p>
-                </div>
-
-                <div class="final-scores">
-                    <div class="final-player-card winner" id="final-player1-card">
-                        <img id="final-avatar1" src="https://api.dicebear.com/7.x/avataaars/svg?seed=player1"
-                            alt="اللاعب ١" class="final-avatar">
-                        <h3 id="final-player1-name">اللاعب ١</h3>
-                        <div class="final-score" id="final-player1-score">٠</div>
-                        <div class="final-stats">
-                            <span><span class="material-icons">check_circle</span> <span
-                                    id="final-player1-correct">٠</span> صحيحة</span>
-                            <span><span class="material-icons">cancel</span> <span id="final-player1-wrong">٠</span>
-                                خاطئة</span>
-                        </div>
-                    </div>
-
-                    <div class="final-player-card" id="final-player2-card">
-                        <img id="final-avatar2" src="https://api.dicebear.com/7.x/avataaars/svg?seed=player2"
-                            alt="اللاعب ٢" class="final-avatar">
-                        <h3 id="final-player2-name">اللاعب ٢</h3>
-                        <div class="final-score" id="final-player2-score">٠</div>
-                        <div class="final-stats">
-                            <span><span class="material-icons">check_circle</span> <span
-                                    id="final-player2-correct">٠</span> صحيحة</span>
-                            <span><span class="material-icons">cancel</span> <span id="final-player2-wrong">٠</span>
-                                خاطئة</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="final-actions">
-                    <button class="btn-secondary" onclick="goToNameScreen()">
-                        <span class="material-icons">group</span>
-                        تغيير اللاعبين
-                    </button>
-                    <button class="btn-primary" onclick="playAgain()">
-                        <span class="material-icons">replay</span>
-                        العب مرة أخرى
-                    </button>
-                </div>
-            </main>
-        </div>
-    </div>
-
-    <script src="script.js"></script>
-</body>
-
-</html>
